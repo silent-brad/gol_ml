@@ -1,5 +1,10 @@
 (*
  * Conway's Game of Life in OCaml
+ * Rules:
+ *   1. Any live cell with fewer than two live neighbors dies, as if by underpopulation
+ *   2. Any live cell with two or three live neighbors lives on to the next generation
+ *   3. Any live cell with more than three live neighbors dies, as if by overpopulation
+ *   4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction
  *)
 
 open Random
@@ -37,6 +42,8 @@ let rec print_game_lines (lines : character list list) : character list list =
 
 let () =
   Random.self_init ();
+
+  (* TODO: Add game logic here -> *)
   let gen_random_game_character (_ : int) : character =
     if Random.int 2 = 1 then Block else Empty
   in
@@ -46,5 +53,6 @@ let () =
   let gen_random_game_lines : character list list =
     List.init game_height gen_random_game_line
   in
+
   ignore (print_game_lines gen_random_game_lines);
   ()
