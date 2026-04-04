@@ -8,8 +8,9 @@ open Random
 let game_width = 100
 let game_height = 25
 
-(* TODO: add color *)
-let block_character = "\u{2588}"
+(* NOTE: These ANSI color codes are designed to work with Nushell/Ghostty and may not work with other shells/terminals *)
+(* Red block character *)
+let block_character = "\u{1b}[31m\u{2588}\u{1b}[0m"
 let empty_character = " "
 
 type character = Block | Empty
