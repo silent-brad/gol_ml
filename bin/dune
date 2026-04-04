@@ -1,3 +1,4 @@
 (executable
  (public_name gol)
- (name main))
+ (name main)
+ (libraries unix))
