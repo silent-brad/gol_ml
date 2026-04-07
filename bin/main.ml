@@ -7,12 +7,16 @@
  *   4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction
  *)
 
+(* NOTE: Just rewrite this! *)
+
+(* TODO: Add alive cell count *)
+
 open Random
 open Unix
 
-(* Constant length of game display *)
-let game_width = 50
-let game_height = 20
+(* Length of game display *)
+let game_width = 100
+let game_height = 40
 
 (* NOTE: These ANSI color codes are designed to work with Nushell/Ghostty and may not work with other shells/terminals *)
 (* IDEA: Add colors by organ? *)
@@ -46,18 +50,30 @@ let rec print_game_lines (lines : character list list) : character list list =
       print_newline ();
       print_game_lines tl
 
-(*
-8 potential live cells to check
-x x x
-x 0 x
-x x x
-  *)
+(* TODO: Fix this inefficient function *)
+let get_live_neighbors (grid : character list list) line_index cell_index : int
+    =
+  let neighbors =
+    List.init 3 (fun i ->
+        if line_index = 0 || cell_index + i = 0 then Dead
+        else
+          try List.nth (List.nth grid (line_index - 1)) (cell_index + i - 1)
+          with Failure _ -> Dead)
+    @ List.init 3 (fun i ->
+        if i = 1 || cell_index + i = 0 then Dead
+        else
+          try List.nth (List.nth grid line_index) (cell_index + i - 1)
+          with Failure _ -> Dead)
+    @ List.init 3 (fun i ->
+        if cell_index + i = 0 then Dead
+        else
+          try List.nth (List.nth grid (line_index + 1)) (cell_index + i - 1)
+          with Failure _ -> Dead)
+  in
+  List.length (List.filter (fun neighbor -> neighbor = Live) neighbors)
 
-let get_live_neighbors (_lines : character list list) (_col : int) (_row : int)
-    : int =
-  Random.int 4
-
-let rec get_next_grid old_grid grid line_index =
+let rec get_next_grid (old_grid : character list list)
+    (grid : character list list) line_index =
   let rec get_next_line line line_index cell_index =
     let get_next_cell (cell : character) line_index cell_index =
       let live_neighbors = get_live_neighbors old_grid line_index cell_index in
@@ -77,6 +93,8 @@ let rec get_next_grid old_grid grid line_index =
       get_next_line line line_index 0
       :: get_next_grid old_grid lines (line_index + 1)
 
+let () = Random.self_init ()
+
 let gen_random_game_character (_ : int) : character =
   if Random.int 2 = 1 then Live else Dead
 
@@ -95,6 +113,4 @@ let rec loop (grid : character list list) =
   Unix.sleepf 0.5;
   loop (get_next_grid grid grid 0)
 
-let () =
-  Random.self_init ();
-  loop initial_grid
+let () = loop initial_grid
