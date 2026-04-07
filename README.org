@@ -1,0 +1,3 @@
+#+TITLE: Conway's Game of Life in OCaml
+#+DATE: 2026-04-07
+#+AUTHOR: Brad White
