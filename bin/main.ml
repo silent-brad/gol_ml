@@ -9,32 +9,42 @@
 
 (* NOTE: Just rewrite this! *)
 
-(* TODO: Add alive cell count *)
-
 open Random
 open Unix
 
 (* Length of game display *)
-let game_width = 100
-let game_height = 40
+let game_width = 120
+let game_height = 50
 
-(* NOTE: These ANSI color codes are designed to work with Nushell/Ghostty and may not work with other shells/terminals *)
-(* IDEA: Add colors by organ? *)
-let block_character () =
+let live_character () =
   (* Shuffles through colors *)
   "\u{1b}[3" ^ Int.to_string (Random.int 6 + 1) ^ "m\u{2588}\u{1b}[0m"
 
-let empty_character = " "
+let dead_character = " "
 
 type character = Live | Dead
 
 let get_character_string = function
-  | Live -> block_character ()
-  | Dead -> empty_character
+  | Live -> live_character ()
+  | Dead -> dead_character
 
-(* TODO: Add frame border *)
+let print_border_top () =
+  print_string "\u{250C}";
+  for _ = 1 to game_width do
+    print_string "\u{2500}"
+  done;
+  print_string "\u{2510}";
+  print_newline ()
 
-(* Use index instead of list so that doesn't return anything? *)
+let print_border_bottom () =
+  print_string "\u{2514}";
+  for _ = 1 to game_width do
+    print_string "\u{2500}"
+  done;
+  print_string "\u{2518}";
+  print_newline ()
+
+(* TODO: Use index instead of list so that doesn't return anything? *)
 let rec print_game_line (characters : character list) : character list =
   match characters with
   | [] -> []
@@ -42,15 +52,21 @@ let rec print_game_line (characters : character list) : character list =
       print_string (get_character_string hd);
       print_game_line tl
 
-let rec print_game_lines (lines : character list list) : character list list =
-  match lines with
-  | [] -> []
-  | hd :: tl ->
-      let _ = print_game_line hd in
-      print_newline ();
-      print_game_lines tl
+let print_game_lines (lines : character list list) =
+  print_border_top ();
+  let rec print_lines lines =
+    match lines with
+    | [] -> ()
+    | hd :: tl ->
+        print_string "\u{2502}";
+        ignore (print_game_line hd);
+        print_string "\u{2502}";
+        print_newline ();
+        print_lines tl
+  in
+  print_lines lines;
+  print_border_bottom ()
 
-(* TODO: Fix this inefficient function *)
 let get_live_neighbors (grid : character list list) line_index cell_index : int
     =
   let neighbors =
@@ -109,7 +125,36 @@ let initial_grid = gen_random_game_lines
 let rec loop (grid : character list list) =
   (* Clear the terminal *)
   print_string "\u{001b}[2J\u{001b}[H";
-  ignore (print_game_lines grid);
+  let alive_count =
+    List.length (List.filter (fun cell -> cell = Live) (List.concat grid))
+  in
+  let ascii_digits =
+    [|
+      [| " _ "; "| |"; "|_|" |];
+      [| "   "; "  |"; "  |" |];
+      [| " _ "; " _|"; "|_ " |];
+      [| " _ "; " _|"; " _|" |];
+      [| "   "; "|_|"; "  |" |];
+      [| " _ "; "|_ "; " _|" |];
+      [| " _ "; "|_ "; "|_|" |];
+      [| " _ "; "  |"; "  |" |];
+      [| " _ "; "|_|"; "|_|" |];
+      [| " _ "; "|_|"; " _|" |];
+    |]
+  in
+  let digits = String.to_seq (string_of_int alive_count) |> List.of_seq in
+  let ascii_number_line row =
+    String.concat ""
+      (List.map
+         (fun c -> ascii_digits.(Char.code c - Char.code '0').(row))
+         digits)
+  in
+  Printf.printf "    _    _ _             ____     _ _       %s\n" (ascii_number_line 0) [@ocamlformat "disable"];
+  Printf.printf "   / \\  | (_)_   _____  / ___|___| | |___   %s\n" (ascii_number_line 1) [@ocamlformat "disable"];
+  Printf.printf "  / _ \\ | | \\ \\ / / _ \\| |   / _ \\ | / __|  %s\n" (ascii_number_line 2) [@ocamlformat "disable"];
+  Printf.printf " / ___ \\| | |\\ V /  __/| |__|  __/ | \\__ \\ \n" [@ocamlformat "disable"];
+  Printf.printf "/_/   \\_\\_|_| \\_/ \\___| \\____\\___|_|_|___/ \n" [@ocamlformat "disable"];
+  print_game_lines grid;
   Unix.sleepf 0.5;
   loop (get_next_grid grid grid 0)
 
