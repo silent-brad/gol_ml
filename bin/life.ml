@@ -25,18 +25,18 @@ let print_horizontal_border left right =
   print_string right;
   print_newline ()
 
-let print_row (row : cell list) =
+let print_row row =
   print_string "\u{2502}";
   List.iter (fun c -> print_string (cell_to_string c)) row;
   print_string "\u{2502}";
   print_newline ()
 
-let print_grid (grid : cell list list) =
+let print_grid grid =
   print_horizontal_border "\u{250C}" "\u{2510}";
   List.iter print_row grid;
   print_horizontal_border "\u{2514}" "\u{2518}"
 
-let count_live_neighbors (grid : cell list list) row col =
+let count_live_neighbors grid row col =
   let get_cell grid row col =
     try List.nth (List.nth grid row) col
     with Failure _ | Invalid_argument _ -> Dead
@@ -52,7 +52,7 @@ let count_live_neighbors (grid : cell list list) row col =
         acc offsets)
     0 offsets
 
-let next_grid (grid : cell list list) =
+let next_grid grid =
   List.mapi
     (fun row_i row ->
       List.mapi
@@ -88,7 +88,7 @@ let ascii_number_line digits row =
        (fun c -> ascii_digits.(Char.code c - Char.code '0').(row))
        digits)
 
-let rec loop (grid : cell list list) =
+let rec loop grid =
   print_string "\u{001b}[2J\u{001b}[H";
   let alive_count =
     List.length (List.filter (fun c -> c = Alive) (List.concat grid))
